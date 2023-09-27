@@ -23,4 +23,4 @@ def readall(filepath):
         res=f.read()
     return res
 
-print(powershell(readall("ps_code/autoupdate.ps1")))
+

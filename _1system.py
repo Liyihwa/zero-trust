@@ -4,7 +4,11 @@ import windows
 def system_info():
     os_type=platform.system()
     if os_type=="Windows":
-        return windows.windows_type(),windows.windows_version(),windows.windows_patch_count()
+        return windows.type(),\
+            windows.version(),\
+            windows.patch_count(),\
+            windows.au_isopen(),\
+            windows.au_level(),\
+            windows.firewall_isopen()
 
-print(windows.get_score())
-
+print(system_info())
