@@ -4,6 +4,9 @@ import utils
 
 # 操作系统类型:
 # Pro
+def is_true(s):
+    return s=="true"
+
 def type():
     c = r'systeminfo | findstr /B /C:"OS 名称"'
     output = utils.cmd(c).split(':')[-1].strip().split(" ")[-1]
@@ -56,7 +59,7 @@ def get_score():
 
 # 获取是否自动更新以及自动更新等级
 def au_isopen():
-    return au_level() != 1
+    return str(au_level() != "1")
 
 
 
@@ -66,12 +69,12 @@ def au_isopen():
 # 3 - 自动下载更新，但需要用户确认后才能安装。
 # 4 - 启用自动下载和安装更新。
 def au_level():
-    return int(utils.powershell(utils.readall("windows/ps_code/autoupdate.ps1")))
+    return utils.powershell(utils.readall("windows/ps_code/autoupdate.ps1"))
 
 # 检查防火墙是否开启
 # Windows对于域网络,专用网络,公用网络有三种防火墙,这三个防火墙同时打开时才认为防火墙开启了
 def firewall_isopen():
-    return bool(utils.powershell(utils.readall("windows/ps_code/firewall.ps1")))
+    return utils.powershell(utils.readall("windows/ps_code/firewall.ps1"))
 
 # 基线检查
 # 返回结果分别为:
@@ -79,12 +82,4 @@ def firewall_isopen():
 # 是否开启Windows自动登录,基线检测总条目数,基线检测符合要求条目数,基线检测不符合要求条目数
 def base_line():
     res=utils.powershell_from_file("windows/ps_code/baseline.ps1").split('\n')
-    app_log = bool(res[0])
-    sys_log = bool(res[1])
-    safe_log = bool(res[2])
-    screen_time = bool(res[3])
-    windows_autologin=bool(res[4])
-    total=int(res[5])
-    ok=int(res[6])
-    bad=int(res[7])
-    return app_log,sys_log,safe_log,screen_time,windows_autologin,total,ok,bad
+    return res

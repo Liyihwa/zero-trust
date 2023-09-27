@@ -16,7 +16,7 @@ def powershell(command):
         output = result.stdout
     else:
         output = result.stderr
-    return output
+    return output.strip()
 
 
 def cmd_from_file(filepath):
