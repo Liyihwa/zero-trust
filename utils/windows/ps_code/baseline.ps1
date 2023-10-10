@@ -1470,6 +1470,8 @@ echo $allin
 echo $t
 echo $f
 
+Remove-Item -Path "config.cfg"
+
 
 
 
