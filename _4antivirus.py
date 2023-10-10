@@ -1,7 +1,8 @@
+import logwa
 import utils
 import entity
 # 获取当前所有运行的安全软件的名称
-def __get_id():
+def __running_antivirus():
     '''
     HipsDaemon.exe  火绒安全服务模块
     PopBlock.exe    火绒弹窗拦截程序
@@ -17,13 +18,20 @@ def __get_id():
     return None
 
 def antivirus_info():
-    id=__get_id()
+    id=__running_antivirus()
+    name_list=["杀毒软件名称","杀毒软件开机自动启动是否开启","杀入软件自动扫描是否开启",
+               "杀毒软件版本","杀毒软件病毒库版本","杀毒软件检测出恶意软件的次数"]
+    logwa.line()
+    logwa.info("杀毒软件信息收集中...")
     if id ==entity.antivirus.Type.HuoRong:
         huorong=entity.antivirus.HuoRong()
-        return "火绒",False,huorong.is_autorun(),huorong.get_version(),huorong.get_viruslib_version(),huorong.get_malicious_detected_count()
+        res_list=["火绒",False,huorong.is_autorun(),huorong.get_version(),huorong.get_viruslib_version(),
+             huorong.get_malicious_detected_count()]
+        for name,res in zip(name_list,res_list):
+            logwa.infof("{}: {::gx}",name,res)
+        return name_list,res_list
 
 
 
-print(antivirus_info())
 
 

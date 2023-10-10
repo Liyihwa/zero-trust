@@ -1,6 +1,7 @@
 import platform
 import string
 import subprocess
+from safewa import oswa
 import clr  # 导入 pythonnet 模块
 import utils
 
@@ -86,15 +87,7 @@ def firewall_level():
 # 是否开启Windows自动登录,基线检测总条目数,基线检测符合要求条目数,基线检测不符合要求条目数
 def base_line():
     res = utils.powershellf("utils/windows/ps_code/baseline.ps1").split('\n')
-    app_log = res[0]
-    sys_log = res[1]
-    safe_log = res[2]
-    screen_time = res[3]
-    windows_autologin = res[4]
-    total = res[5]
-    ok = res[6]
-    bad = res[7]
-    return app_log, sys_log, safe_log, screen_time, windows_autologin, total, ok, bad
+    return res
 
 
 def hosts_info():
@@ -105,7 +98,7 @@ def hosts_info():
     # 1.1.1.1 a.com
     # 将a.com作为key,1.1.1.1作为value存入字典
     # 同时需要注意,出现同一个域名不同ip时,会以最先出现的为准,因此存入字典时要先检查有无key
-    dic = {}
+    hosts_items = {}
     try:
         f = open(r'C:\Windows\System32\drivers\etc\hosts')
     except FileNotFoundError:
@@ -115,23 +108,25 @@ def hosts_info():
         if not line:
             break
         line = line.strip()
-        if line.startswith("#"):
+        if line.startswith("#") or len(line) == 0:
             continue
         ip, host = line.split()
-        if host not in dic:
-            dic[host] = ip
+        if host not in hosts_items:
+            hosts_items[host] = ip
     f.close()
 
-    private_ip = 0
+    private_ip_count = 0
     # 检查所有ip中非内网条目的数量
-    for k, v in dic.items():
+    for k, v in hosts_items.items():
         if utils.is_private_ip(v):
-            private_ip += 1
-    return len(dic), private_ip, len(dic) - private_ip
+            private_ip_count += 1
+
+    return len(hosts_items),private_ip_count,len(hosts_items)-private_ip_count
 
 
 def cpu_temper():
-    dllpath = r"E:\lab\零信任评估模型\code\utils\windows\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+    dllpath = oswa.pwd() + r"\utils\windows\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+    print(dllpath)
     # OpenHardwareMonitorLib 路径
     clr.AddReference(dllpath)
     from OpenHardwareMonitor.Hardware import Computer
@@ -141,7 +136,7 @@ def cpu_temper():
     c.CPUEnabled = True  # 获取 CPU 相关信息
     c.GPUEnabled = False  # 获取 GPU 相关信息
     c.Open()
-    temperature=[]
+    temperature = []
     for a in range(0, len(c.Hardware[0].Sensors)):
         if "/temperature" in str(c.Hardware[0].Sensors[a].Identifier):
             temperature.append(c.Hardware[0].Sensors[a].get_Value())

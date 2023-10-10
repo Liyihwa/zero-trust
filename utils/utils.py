@@ -156,3 +156,12 @@ def query_db(db_path,sql):
     cursor.close()
     conn.close()
     return res
+
+def merge_dict(dic1,dic2):
+    dic3={}
+    for k,v in dic1:
+        dic3[k]=v
+    for k,v in dic2:
+        dic3[k]=v
+    return dic3
+

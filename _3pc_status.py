@@ -4,8 +4,7 @@ import pynvml
 import psutil
 import threading
 
-import logwa
-import utilwa
+from safewa import logwa, utilwa
 from utils import windows
 import os
 
@@ -39,7 +38,6 @@ u_disk_count = 0
 
 
 def cpu():
-    logwa.infof("Cpu info collection start")
     cpu_full_use_count = 0
     temp_cpu_percents = []
     for i in range(config.sampling_count):
@@ -56,12 +54,9 @@ def cpu():
     cpu_temper = sum(temperatures) / len(temperatures)
     cpu_full_use_rate = cpu_full_use_count / config.sampling_count
 
-    logwa.infof("Cpu info collection end\nCpu percentage average:{::ux}\nCpu temper:{::ux}\nCpu full use rage:{::ux}",
-                cpu_percentage_avg, cpu_temper, cpu_full_use_rate)
 
 
 def memory():
-    logwa.infof("Memory info collection start")
     temp_memory_percents = []
     for i in range(config.sampling_count):
         temp_memory_percents.append(psutil.virtual_memory().percent)
@@ -69,15 +64,12 @@ def memory():
 
     global memory_percent_avg
     memory_percent_avg = sum(temp_memory_percents) / len(temp_memory_percents)
-    logwa.infof("Memory info collection end, memory percent average:{::ux}",
-                memory_percent_avg)
 
 
 def disk():
     # 在启动时采样一次,结束时采样一次即可算出利用率均值
     interval = config.sampling_count * config.pre_sampling_time
     start = psutil.disk_io_counters()
-    logwa.infof("Disk info collection start")
     time.sleep(interval)
     end = psutil.disk_io_counters()
     read_bytes = end.read_bytes - start.read_bytes
@@ -97,16 +89,7 @@ def disk():
     disk_available_size = total - used
     disk_available_rate = used / total
 
-    logwa.infof("Disk info collection end\n"
-                "Disk read average:{::ux}\n"
-                "Disk write average:{::ux}\n"
-                "Disk available size:{::ux}\n"
-                "Disk available rate:{::ux} ",
-                str(disk_read_avg) + "B",
-                str(disk_write_avg) + "B",
-                disk_available_size,
-                disk_available_rate
-                )
+
 
 
 def gpu():
@@ -141,22 +124,12 @@ def gpu():
     gpu_total_memory = sum(gpus_total_mm) / len(gpus_total_mm)
     pynvml.nvmlShutdown()
 
-    logwa.infof("Gpu  info collection end\n"
-                "Gpu power:{::ux}\n"
-                "Gpu temper:{::ux}\n"
-                "Gpu used memory:{::ux}\n"
-                "Gpu total memory:{::ux}",
-                gpu_power,
-                gpu_temper,
-                gpu_used_memory,
-                gpu_total_memory)
 
 
 def net_interface():
     # 在启动时采样一次,结束时采样一次即可算出利用率均值
     interval = config.sampling_count * config.pre_sampling_time
     start = psutil.net_io_counters()
-    logwa.infof("Net interface info collection start")
     time.sleep(interval)
     end = psutil.net_io_counters()
 
@@ -167,9 +140,7 @@ def net_interface():
     net_read_average = bytes_recv / interval
     net_write_average = bytes_sent / interval
 
-    logwa.infof("Net interface info collection end\nNet read read average:{::ux}\nNet write average:{::ux}",
-                str(net_read_average) + "B",
-                str(net_write_average) + "B")
+
 
 
 def u_disk():
@@ -184,14 +155,15 @@ def u_disk():
             if os.path.exists(mount_point):
                 count += 1
 
-    logwa.infof("U disk count: {::ux}", count)
     global u_disk_count
     u_disk_count = count
 
 
 # =====================================
 
-def pc_status():
+def pc_status_info():
+    logwa.line()
+    logwa.infof("PC状态信息收集中...")
     threads = [
         threading.Thread(target=disk),
         threading.Thread(target=cpu),
@@ -205,11 +177,15 @@ def pc_status():
     for t in threads:
         t.join()
 
-    return cpu_percentage_avg, cpu_full_use_rate, cpu_temper, \
-        memory_percent_avg, \
-        disk_write_avg, disk_read_avg, disk_available_size,disk_available_rate,\
-        net_write_average,net_read_average,\
-        gpu_total_memory,gpu_used_memory,gpu_power,gpu_temper,\
-        u_disk_count
+    res_list=[cpu_percentage_avg, cpu_full_use_rate, cpu_temper, memory_percent_avg,
+              disk_write_avg, disk_read_avg, disk_available_size, disk_available_rate,
+              net_write_average, net_read_average, gpu_total_memory, gpu_used_memory,
+              gpu_power, gpu_temper, u_disk_count]
+    name_list=["10min内CPU使用率均值", "CPU满载时间比例", "CPU当前温度", "10min内内存使用率均值",
+               "10min内磁盘写入均值", "10min内磁盘读取均值", "磁盘当前可用容量", "磁盘当前占用率",
+               "10min网速上传均值", "10min网速下载均值", "GPU总容量(内存)", "GPU已占用容量",
+               "GPU当前功率", "GPU当前温度", "当前插入U盘数量"]
+    for name,res in zip(name_list,res_list):
+        logwa.infof("{}: {::gx}",name,res)
+    return name_list,res_list
 
-print(pc_status())
