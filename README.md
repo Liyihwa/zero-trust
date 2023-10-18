@@ -5,6 +5,8 @@
 ```shell
 cd zero-trust
 git clone https://github.com/Liyihwa/safewa.git 
+pip install zxcvbn
+
 ```
 
 ## 脚本运行

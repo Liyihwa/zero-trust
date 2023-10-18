@@ -2,7 +2,7 @@ import subprocess
 import winreg
 import psutil
 import sqlite3
-
+from safewa import oswa
 
 def cmd(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -23,6 +23,7 @@ def powershell(command):
         output = result.stderr
     return output.strip()
 
+
 # 从cmd中执行文件
 def cmdf(filepath):
     result = subprocess.run("cmd {}".format(filepath), shell=True, capture_output=True, text=True)
@@ -33,6 +34,7 @@ def cmdf(filepath):
     else:
         error = result.stderr.strip()
         return error
+
 
 # 从powershell中执行文件
 def powershellf(filepath):
@@ -78,13 +80,13 @@ def is_private_ip(ip_address):
     return False
 
 
-def get_registry_value(key,default=None):
-    key = key.strip("\\")
-    split = key.split("\\")
-    key_prefix = split[0]
-    key_suffix = split[-1]
-    key_path = "\\".join(split[1:-1])
-    keys_prefix = {
+def __registry_path_split(path):
+    path = path.strip("\\")
+    split = path.split("\\")
+    path_prefix = split[0]
+    path_suffix = split[-1]
+    path_middle = "\\".join(split[1:-1])
+    paths_prefix = {
         "HKEY_CLASSES_ROOT": winreg.HKEY_CLASSES_ROOT,
         "HKEY_CURRENT_USER": winreg.HKEY_CURRENT_USER,
         "HKEY_USERS": winreg.HKEY_USERS,
@@ -92,18 +94,29 @@ def get_registry_value(key,default=None):
         "HKEY_DYN_DATA": winreg.HKEY_DYN_DATA,
         "HKEY_LOCAL_MACHINE": winreg.HKEY_LOCAL_MACHINE
     }
+    return paths_prefix[path_prefix], path_middle, path_suffix
+
+
+def get_registry_info(key):
+    root_key, path, key = __registry_path_split(key)
     try:
-
-        registry_key = winreg.OpenKey(keys_prefix[key_prefix], key_path)
-
-        # 获取注册表项的值
-        value, data_type = winreg.QueryValueEx(registry_key, key_suffix)
+        registry_key = winreg.OpenKey(root_key, path, 0, winreg.KEY_READ)
+        res = winreg.QueryValueEx(registry_key, key)
         winreg.CloseKey(registry_key)
+        return res
     except FileNotFoundError as e:
-        if default is None:
-            raise e
-        else:
-            return default
+        return None
+
+
+def get_registry_value(key):
+    root_key, path, key = __registry_path_split(key)
+    try:
+        path = winreg.OpenKey(root_key, path)
+        # 获取注册表项的值
+        value, data_type = winreg.QueryValueEx(path, key)
+        winreg.CloseKey(path)
+    except FileNotFoundError:
+        return None, None
 
     return value, data_type
 
@@ -144,24 +157,59 @@ def query_process(names=None, pids=None):
             res.append(p)
     return res
 
-def query_db(db_path,sql):
 
+def query_db(db_path, sql):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     # 执行查询语句
     cursor.execute(sql)
 
-    res=cursor.fetchall()
+    res = cursor.fetchall()
     cursor.close()
     conn.close()
     return res
 
-def merge_dict(dic1,dic2):
-    dic3={}
-    for k,v in dic1:
-        dic3[k]=v
-    for k,v in dic2:
-        dic3[k]=v
-    return dic3
 
+def merge_dict(dic1, dic2):
+    dic3 = {}
+    for k, v in dic1:
+        dic3[k] = v
+    for k, v in dic2:
+        dic3[k] = v
+    return dic3
+'''
+深度优先搜索
+xml.dom.minidom 的节点
+callback函数需要返回继续向下搜索的节点的迭代器
+'''
+def dfs_domNode(etNode,callback):
+    search_nodes=callback(etNode)
+    if search_nodes is not None:
+        for node in search_nodes:
+            dfs_domNode(node,callback)
+'''
+    删除xml.dom.minidom的node中的所有空行子节点
+'''
+def remove_empty_lines(node):
+    children = node.childNodes
+    for child in children:
+        if child.nodeType == child.TEXT_NODE and child.nodeValue.strip() == "":
+            node.removeChild(child)
+    for child in node.childNodes:
+        if child.nodeType == child.ELEMENT_NODE:
+            remove_empty_lines(child)
+
+def sysinspector_caller():
+    base_dir=r".\utils\windows\sysinspector"
+    # 运行前先清理其他报告
+    for f in oswa.ls(base_dir):
+        if f.endswith(".xml"):
+            oswa.rm(f)
+    powershellf(r"utils\windows\ps_code\sysinspector_caller.ps1")
+
+def get_sysinspector_report_path():
+    for f in oswa.ls(r".\utils\windows\sysinspector"):
+            if f.endswith(".xml"):
+                return f
+    return None

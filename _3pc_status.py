@@ -7,6 +7,7 @@ import threading
 from safewa import logwa, utilwa
 from utils import windows
 import os
+from configs import global_config
 
 # 配置 ===========================
 config = utilwa.Configer()
@@ -162,8 +163,10 @@ def u_disk():
 # =====================================
 
 def pc_status_info():
-    logwa.line()
-    logwa.infof("PC状态信息收集中...")
+    logger=global_config.Logger
+    logger.line()
+    logger.infof("PC状态信息收集中...")
+
     threads = [
         threading.Thread(target=disk),
         threading.Thread(target=cpu),
@@ -186,6 +189,7 @@ def pc_status_info():
                "10min网速上传均值", "10min网速下载均值", "GPU总容量(内存)", "GPU已占用容量",
                "GPU当前功率", "GPU当前温度", "当前插入U盘数量"]
     for name,res in zip(name_list,res_list):
-        logwa.infof("{}: {::gx}",name,res)
+        logger.infof("{}: {::gx}",name,res)
+        logger.update()
     return name_list,res_list
 

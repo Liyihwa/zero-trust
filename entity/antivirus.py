@@ -1,8 +1,9 @@
 import abc
+import os.path
 from abc import abstractmethod
 from enum import Enum
 import json
-
+from safewa import oswa
 import psutil
 
 import utils
@@ -27,10 +28,6 @@ class Antivirus():
         return Antivirus.__name[self.type]
 
     @abstractmethod
-    def get_exepath(self):
-        pass
-
-    @abstractmethod
     def get_version(self):
         pass
 
@@ -39,11 +36,19 @@ class Antivirus():
         pass
 
     @abstractmethod
-    def get_malicious_detected_count(self):
+    def get_unsafe_count(self):
         pass
 
     @abstractmethod
     def is_autorun(self):
+        pass
+
+    @abstractmethod
+    def is_autoscan(self):
+        pass
+
+    @abstractmethod
+    def time_not_scan(self):    #有多久没进行扫描了
         pass
 
 
@@ -54,23 +59,28 @@ class HuoRong(Antivirus):
         process_names = ["HipsDaemon.exe"]
         self.version = None
         self.viruslib_version = None
-        self.malicious_detected_count = 0
+        self.unsafe_count = 0
+        self.last_scan_time=0
 
-        # 目前写死
+        # 火绒日志位置,目前写死
         db_path = "C:\ProgramData\Huorong\Sysdiag\log.db"
         sql = "SELECT * FROM HrLogV3"
         rows = utils.query_db(db_path, sql)
         for r in rows:
-            if r[2] == "filemon":  # r[2]为fname列,代表本条日志意义
-                self.malicious_detected_count += 1
-            elif r[2] == "update":
+            # r[2]为fname列,代表本条日志意义
+            if r[2]=="update":
                 # 转为json
                 obj = json.loads(r[4])
-                self.viruslib_version = obj["detail"]["db_time"]
+                self.viruslib_version = obj["detail"]["db_time"]    # 获取病毒库
+            elif r[2]=="scan":
+                self.last_scan_time=r[3]    # r[3]为日志时间
+            elif r[2] in ["rlogin","filemon"]:
+                self.unsafe_count += 1
+
 
         # 查询火绒版本
         path = psutil.Process(utils.query_process(names=process_names)[0].pid).exe()
-        # xxxx\Sysdiag\bin\HipsDaemon.exe 取出Sysdiag及以前的部分,目前直接写死
+        # 路径一般为: xxxx\Sysdiag\bin\HipsDaemon.exe 我们需要的是 xxxx\VERSION
         path = path[:-19] + r"\VERSION"
         with open(path) as f:
             self.version = f.read()
@@ -81,15 +91,48 @@ class HuoRong(Antivirus):
     def get_viruslib_version(self):
         return self.viruslib_version
 
-    def get_malicious_detected_count(self):
-        return self.malicious_detected_count
+    def get_unsafe_count(self):
+        return self.unsafe_count
 
-    def get_exepath(self):
-        # todo
-        pass
+    def is_autoscan(self):
+        return False  # 火绒目前版本(5.0.74.1)不支持自动扫描
 
     def is_autorun(self):
-        val = utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Sysdiag", "")
+        # 只要存在该键值对就说明是自启动的
+
+        val = utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Sysdiag")
         return val != ""
 
 
+class QiHoo360(Antivirus):
+    def __init__(self):
+        super().__init__()
+        self.type = Type.QiHoo360
+        self.version = None
+        self.viruslib_version = None    # todo
+        self.unsafe_count = 0   # todo
+        self.last_scan_time=0
+
+        # 查询360版本
+        self.version= utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\360Safe\LiveUp\UpdateCfg\360ver.dll\ver")
+
+        for f in oswa.ls(r"C:\Users\Liyihwa\AppData\Roaming\360Safe\360ScanLog"):
+            self.last_scan_time=max(self.last_scan_time,int(os.path.getctime(f)))
+
+    def get_version(self):
+        return self.version
+
+    def get_viruslib_version(self):
+        return self.viruslib_version
+
+    def get_unsafe_count(self):
+        return self.unsafe_count
+
+    def is_autoscan(self):
+        return False  # 火绒目前版本(5.0.74.1)不支持自动扫描
+
+    def is_autorun(self):
+        # 只要存在该键值对就说明是自启动的
+        val = utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Sysdiag")
+        return val != ""
+QiHoo360()
