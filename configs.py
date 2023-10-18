@@ -6,8 +6,6 @@ global_config, system_config, hosts_config, \
     pc_status_configs, antivirus_config, registry_config, \
     password_config, driver_config = Configer(), Configer(), Configer(), Configer(), Configer(), Configer(), Configer(), Configer()
 
-# 全局配置
-
 
 # system配置
 system_config.CheckedItemsCount = 14  # 系统类中被检查的条目数的个数
@@ -17,13 +15,17 @@ hosts_config.CheckedItemsCount = 3
 
 # pc_status配置
 pc_status_configs.CheckedItemsCount = 15
+pc_status_configs.cpu_full_use_threshold = 85   # cpu满载阈值,大于该值时认为是满载
+pc_status_configs.pre_sampling_time = 10        # 每次采样10s
+pc_status_configs.sampling_count = 1           # 共采样次数
+
 
 # antivirus配置
 antivirus_config.CheckedItemsCount = 6
 
 # registry配置
 registry_config.CheckedItemsCount = 9
-registry_config.UsePreviousReport = True  # 是否使用原先报告,为True时程序不会调用Sysinspector,而是使用原有报告
+registry_config.UsePreviousReport = False  # 是否使用原先报告,为True时程序不会调用Sysinspector,而是使用原有报告
 
 # password配置
 password_config.CheckedItemsCount = 5
@@ -39,3 +41,5 @@ for config in [system_config, hosts_config, pc_status_configs, antivirus_config,
                driver_config]:
     global_config.CheckedItemsCount = global_config.CheckedItemsCount + config.CheckedItemsCount
 global_config.Logger = progressbar.ProgressBar(global_config.CheckedItemsCount)
+
+global_config.OutputFileName="Output.xlsx"

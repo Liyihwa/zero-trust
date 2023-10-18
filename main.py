@@ -10,7 +10,7 @@ from _5registry import registry_info
 from _6password import password_info
 from _7driver import driver_info
 from openpyxl import Workbook
-
+from configs import global_config
 if __name__ == '__main__':
     if not oswa.is_admin():
         logwa.errof("{::rx}", "Please open as an administrator")
@@ -30,4 +30,4 @@ if __name__ == '__main__':
 
     ws.append(name_list)
     ws.append(res_list)
-    wb.save('信息汇总.xlsx')
+    wb.save(global_config.OutputFileName)

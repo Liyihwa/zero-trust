@@ -7,13 +7,7 @@ import threading
 from safewa import logwa, utilwa
 from utils import windows
 import os
-from configs import global_config
-
-# 配置 ===========================
-config = utilwa.Configer()
-config.cpu_full_use_threshold = 85  # cpu满载阈值,大于该值时认为是满载
-config.pre_sampling_time = 10  # 每次采样10s
-config.sampling_count = 1  # 共采样次数
+from configs import global_config,pc_status_configs
 
 # 全局变量========================
 cpu_percentage_avg = 0
@@ -41,11 +35,11 @@ u_disk_count = 0
 def cpu():
     cpu_full_use_count = 0
     temp_cpu_percents = []
-    for i in range(config.sampling_count):
-        temp_cpu_percent = psutil.cpu_percent(interval=config.pre_sampling_time) * 10
+    for i in range(pc_status_configs.sampling_count):
+        temp_cpu_percent = psutil.cpu_percent(interval=pc_status_configs.pre_sampling_time) * 10
         if temp_cpu_percent > 100:
             temp_cpu_percent = 100
-        if temp_cpu_percent > config.cpu_full_use_threshold:
+        if temp_cpu_percent > pc_status_configs.cpu_full_use_threshold:
             cpu_full_use_count += 1
         temp_cpu_percents.append(temp_cpu_percent)
 
@@ -53,15 +47,15 @@ def cpu():
     cpu_percentage_avg = sum(temp_cpu_percents) / len(temp_cpu_percents)
     temperatures = windows.cpu_temper()
     cpu_temper = sum(temperatures) / len(temperatures)
-    cpu_full_use_rate = cpu_full_use_count / config.sampling_count
+    cpu_full_use_rate = cpu_full_use_count / pc_status_configs.sampling_count
 
 
 
 def memory():
     temp_memory_percents = []
-    for i in range(config.sampling_count):
+    for i in range(pc_status_configs.sampling_count):
         temp_memory_percents.append(psutil.virtual_memory().percent)
-        time.sleep(config.pre_sampling_time)
+        time.sleep(pc_status_configs.pre_sampling_time)
 
     global memory_percent_avg
     memory_percent_avg = sum(temp_memory_percents) / len(temp_memory_percents)
@@ -69,7 +63,7 @@ def memory():
 
 def disk():
     # 在启动时采样一次,结束时采样一次即可算出利用率均值
-    interval = config.sampling_count * config.pre_sampling_time
+    interval = pc_status_configs.sampling_count * pc_status_configs.pre_sampling_time
     start = psutil.disk_io_counters()
     time.sleep(interval)
     end = psutil.disk_io_counters()
@@ -129,7 +123,7 @@ def gpu():
 
 def net_interface():
     # 在启动时采样一次,结束时采样一次即可算出利用率均值
-    interval = config.sampling_count * config.pre_sampling_time
+    interval = pc_status_configs.sampling_count * pc_status_configs.pre_sampling_time
     start = psutil.net_io_counters()
     time.sleep(interval)
     end = psutil.net_io_counters()

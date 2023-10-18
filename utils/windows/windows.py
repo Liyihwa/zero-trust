@@ -125,7 +125,7 @@ def hosts_info():
 
 
 def cpu_temper():
-    dllpath = oswa.pwd() + r"OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+    dllpath = oswa.pwd()+r"/utils/windows/OpenHardwareMonitor/OpenHardwareMonitorLib.dll"
     # OpenHardwareMonitorLib 路径
     clr.AddReference(dllpath)
     from OpenHardwareMonitor.Hardware import Computer
