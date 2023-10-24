@@ -4,6 +4,10 @@ import psutil
 import os
 import winshell
 
+from configs import global_config
+from safewa.logwa import logger
+
+
 def get_installed_software_info():
     software_list = []
     wmi = win32com.client.GetObject("winmgmts:\\\\.\\root\\cimv2")
@@ -16,11 +20,6 @@ def get_installed_software_info():
 
     return software_list
 
-
-installed_software = get_installed_software_info()
-for software in installed_software:
-    print(f"名称: {software['Name']}, 供应商: {software['Vendor']}")
-
 def is_remote_desktop_enabled():
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Terminal Server") as key:
@@ -32,19 +31,11 @@ def is_remote_desktop_enabled():
     except Exception as e:
         return f"无法确定远程桌面状态: {e}"
 
-remote_desktop_enabled = is_remote_desktop_enabled()
-
-if remote_desktop_enabled:
-    print("远程桌面已启用")
-else:
-    print("远程桌面已禁用")
-
 def count_remote_ssh_connections():
     ssh_connections = [conn for conn in psutil.net_connections(kind='tcp') if len(conn.raddr) == 2 and conn.raddr[1] == 22]
     return len(ssh_connections)
 
-ssh_count = count_remote_ssh_connections()
-print(f"远程SSH连接数量: {ssh_count}")
+
 
 def is_shortcut_valid(shortcut_path):
     if os.path.exists(shortcut_path):
@@ -70,11 +61,43 @@ def check_desktop_shortcuts():
 
     return invalid_shortcuts
 
-invalid_shortcuts = check_desktop_shortcuts()
+def program_info():
+    logger = global_config.Logger
+    logger.line()
+    logger.info("软件信息收集中...")
+    name_list = []
+    res_list = []
+    name_list.append("安装软件数量")
+    installed_software = get_installed_software_info()
+    res_list.append(len(installed_software))
+    # for software in installed_software:
+    #     print(f"名称: {software['Name']}, 供应商: {software['Vendor']}")
 
-if invalid_shortcuts:
-    print("以下桌面图标快捷方式不正常或目标不存在：")
-    for shortcut in invalid_shortcuts:
-        print(shortcut)
-else:
-    print("所有桌面图标快捷方式正常。")
+    remote_desktop_enabled = is_remote_desktop_enabled()
+    name_list.append("远程桌面是否启用")
+    res_list.append(remote_desktop_enabled)
+    # if remote_desktop_enabled:
+    #     print("远程桌面已启用")
+    # else:
+    #     print("远程桌面已禁用")
+    invalid_shortcuts = check_desktop_shortcuts()
+    ssh_count = count_remote_ssh_connections()
+    name_list.append("远程SSH连接数量")
+    res_list.append(ssh_count)
+    name_list.append("桌面图标快捷方式是否正常")
+    # print(f"远程SSH连接数量: {ssh_count}")
+    if invalid_shortcuts:
+        res_list.append(False)
+        # print("以下桌面图标快捷方式不正常或目标不存在：")
+        # for shortcut in invalid_shortcuts:
+        #     print(shortcut)
+    else:
+        res_list.append(True)
+        # print("所有桌面图标快捷方式正常。")
+    for k, v in zip(name_list, res_list):
+        logger.infof("{}: {::gx}", k, v)
+    return name_list,res_list
+
+if __name__ == "__main__":
+    logger.info("程序信息收集中.....")
+    program_info()

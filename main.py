@@ -1,5 +1,10 @@
 import sys
 
+from _10userinfo import user_info
+from _11networkinfo import network_info
+from _12programinfo import program_info
+from _8autostartitem import autoitem_info
+from _9process import process_info
 from safewa import oswa
 from safewa import logwa
 from _1system import system_info
@@ -18,7 +23,7 @@ if __name__ == '__main__':
 
     name_list = []
     res_list = []
-    func_list = [system_info, hosts_info, pc_status_info, antivirus_info, registry_info, password_info, driver_info]
+    func_list = [system_info, hosts_info, pc_status_info, antivirus_info, registry_info, password_info, driver_info, autoitem_info, process_info, user_info, network_info, program_info]
     wb = Workbook()
     ws = wb.active
 

@@ -2,6 +2,10 @@ import socket
 import psutil
 import winreg
 
+from configs import global_config
+from safewa.logwa import logger
+
+
 def check_port(host, port):
     try:
         # 创建套接字对象
@@ -12,22 +16,17 @@ def check_port(host, port):
         result = s.connect_ex((host, port))
 
         if result == 0:
-            print(f"端口 {port} 已开启")
+            # print(f"端口 {port} 已开启")
+            return True
         else:
-            print(f"端口 {port} 未开启")
+            # print(f"端口 {port} 未开启")
+            return False
         s.close()
     except Exception as e:
         print(f"无法检查端口 {port}: {e}")
 
 
-# 主机名或IP地址
-host = "localhost"  # 将 "example.com" 替换为您要检查的主机名或IP地址
 
-# 要检查的端口列表
-ports = [3389, 22, 5900, 5901, 23, 3306, 3309]
-
-for port in ports:
-    check_port(host, port)
 
 def get_network_type():
     try:
@@ -41,7 +40,7 @@ def get_network_type():
     except Exception as e:
         return f"无法获取网络接入方式: {e}"
 
-print(f"网络接入方式: {get_network_type()}")
+
 
 def is_windows_firewall_enabled():
     try:
@@ -54,9 +53,36 @@ def is_windows_firewall_enabled():
     except Exception as e:
         return f"无法确定Windows防火墙状态: {e}"
 
-firewall_enabled = is_windows_firewall_enabled()
+def network_info():
+    logger = global_config.Logger
+    logger.line()
+    logger.info("网络信息收集中...")
+    # 主机名或IP地址
+    host = "localhost"  # 将 "example.com" 替换为您要检查的主机名或IP地址
+    name_list = []
+    res_list = []
+    # 要检查的端口列表
+    ports = [3389, 22, 5900, 5901, 23, 3306, 3309]
 
-if firewall_enabled:
-    print("Windows防火墙已启用")
-else:
-    print("Windows防火墙已禁用")
+    for port in ports:
+        # check_port(host, port)
+        name_list.append(str(port)+"是否开启")
+        res_list.append(check_port(host, port))
+    name_list.append("网络接入方式")
+    res_list.append(get_network_type())
+    # print(f"网络接入方式: {get_network_type()}")
+    firewall_enabled = is_windows_firewall_enabled()
+    name_list.append("Windows防火墙是否启用")
+    res_list.append(firewall_enabled)
+    # if firewall_enabled:
+    #     print("Windows防火墙已启用")
+    # else:
+    #     print("Windows防火墙已禁用")
+    for k, v in zip(name_list, res_list):
+        logger.infof("{}: {::gx}", k, v)
+    return name_list, res_list
+
+if __name__ == "__main__":
+
+    logger.info("网络信息收集中.....")
+    network_info()

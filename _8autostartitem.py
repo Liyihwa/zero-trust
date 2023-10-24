@@ -4,6 +4,10 @@ import winreg
 from virustotal_python import Virustotal
 from win32com.client import Dispatch
 
+from configs import global_config
+from safewa.logwa import logger
+
+
 def get_startup_items():
     startup_items = []
     run_key = r"Software\Microsoft\Windows\CurrentVersion\Run"
@@ -11,7 +15,7 @@ def get_startup_items():
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, run_key) as hkey:
             for i in range(winreg.QueryInfoKey(hkey)[1]):
                 name, value, type = winreg.EnumValue(hkey, i)
-                if(type==2):
+                if (type == 2):
                     continue
                 path = extract_file_path(value)
                 # virus_total_info = get_virustotal_info(path)
@@ -64,34 +68,30 @@ def extract_file_path(value):
         return None
 
 
-
-def get_virustotal_info(path):
-    try:
-        if path and os.path.exists(path):
-            virustotal = Virustotal(API_KEY)  # 替换为你的VirusTotal API密钥
-            response = virustotal.file_scan(file_path=path)
-            if response.status_code == 200:
-                scan_results = response.json()["data"]["attributes"]["last_analysis_stats"]
-                return scan_results
-    except Exception as e:
-        print(f"Error: {str(e)}")
-    return {}
-
-
-if __name__ == "__main__":
-    API_KEY = "9c76d64034d1f80bd3bae6b302a06f261ab46fc82f15f85f2b8a639f291fe6da"  # 替换为你的VirusTotal API密钥
+def autoitem_info():
+    logger = global_config.Logger
+    logger.line()
+    logger.info("自启动信息收集中...")
     startup_items = get_startup_items()
     ver_parser = Dispatch('Scripting.FileSystemObject')
-    for item in startup_items:
-        print("Name:", item["Name"])
-        print("Value:", item["Value"])
-        # print("Publisher:", item["Publisher"])
-        print("Create Time:",item["Create Time"])
-        print("Modify Time:",item["Modify Time"])
-        print("Path:", item["Path"])
-        print("Version:",ver_parser.GetFileVersion(item["Path"]))
-        # print("Timestamp:", item["Timestamp"])
-        # print("VirusTotal:", item["VirusTotal"])
-        print("=" * 50)
-    print(len(startup_items))
+    # for item in startup_items:
+    #     print("Name:", item["Name"])
+    #     print("Value:", item["Value"])
+    #     # print("Publisher:", item["Publisher"])
+    #     print("Create Time:",item["Create Time"])
+    #     print("Modify Time:",item["Modify Time"])
+    #     print("Path:", item["Path"])
+    #     print("Version:",ver_parser.GetFileVersion(item["Path"]))
+    #     # print("Timestamp:", item["Timestamp"])
+    #     # print("VirusTotal:", item["VirusTotal"])
+    #     print("=" * 50)
+    # print(len(startup_items))
+    name_list = ["自启动项数量"]
+    res_list = []
+    res_list.append(len(startup_items))
+    for k, v in zip(name_list, res_list):
+        logger.infof("{}: {::gx}", k, v)
+    return name_list, res_list
 
+if __name__ == "__main__":
+    autoitem_info()
