@@ -5,7 +5,6 @@ from enum import Enum
 import json
 from safewa import oswa
 import psutil
-
 import utils
 
 
@@ -115,8 +114,8 @@ class QiHoo360(Antivirus):
 
         # 查询360版本
         self.version= utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\360Safe\LiveUp\UpdateCfg\360ver.dll\ver")
-
-        for f in oswa.ls(r"C:\Users\Liyihwa\AppData\Roaming\360Safe\360ScanLog"):
+        dir_=utils.windows.user_maindir()+r"\AppData\Roaming\360Safe\360ScanLog";
+        for f in oswa.ls(dir_):
             self.last_scan_time=max(self.last_scan_time,int(os.path.getctime(f)))
 
     def get_version(self):

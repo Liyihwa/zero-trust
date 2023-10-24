@@ -6,7 +6,7 @@
 cd zero-trust
 git clone https://github.com/Liyihwa/safewa.git 
 pip install zxcvbn
-
+pip install virustotal_python
 ```
 
 ## 脚本运行

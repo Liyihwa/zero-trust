@@ -25,7 +25,7 @@ antivirus_config.CheckedItemsCount = 6
 
 # registry配置
 registry_config.CheckedItemsCount = 9
-registry_config.UsePreviousReport = False  # 是否使用原先报告,为True时程序不会调用Sysinspector,而是使用原有报告
+registry_config.UsePreviousReport = True  # 是否使用原先报告,为True时程序不会调用Sysinspector,而是使用原有报告
 
 # password配置
 password_config.CheckedItemsCount = 5

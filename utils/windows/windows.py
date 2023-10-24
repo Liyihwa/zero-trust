@@ -4,7 +4,7 @@ import subprocess
 from safewa import oswa
 import clr  # 导入 pythonnet 模块
 import utils
-
+import os
 
 # 操作系统类型:
 # Pro
@@ -140,3 +140,6 @@ def cpu_temper():
         if "/temperature" in str(c.Hardware[0].Sensors[a].Identifier):
             temperature.append(c.Hardware[0].Sensors[a].get_Value())
     return temperature
+
+def user_maindir():
+    return os.path.expanduser("~")

@@ -19,7 +19,6 @@ if __name__ == '__main__':
     name_list = []
     res_list = []
     func_list = [system_info, hosts_info, pc_status_info, antivirus_info, registry_info, password_info, driver_info]
-
     wb = Workbook()
     ws = wb.active
 
