@@ -4,6 +4,7 @@ import psutil
 import sqlite3
 from safewa import oswa
 
+
 def cmd(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
@@ -97,24 +98,61 @@ def __registry_path_split(path):
     return paths_prefix[path_prefix], path_middle, path_suffix
 
 
-def get_registry_info(key):
-    root_key, path, key = __registry_path_split(key)
+def __root_kry2str(rootkey):
+    return {
+        winreg.HKEY_CLASSES_ROOT: "HKEY_CLASSES_ROOT",
+        winreg.HKEY_CURRENT_USER: "HKEY_CURRENT_USER",
+        winreg.HKEY_USERS: "HKEY_USERS",
+        winreg.HKEY_CURRENT_CONFIG: "HKEY_CURRENT_CONFIG",
+        winreg.HKEY_DYN_DATA: "HKEY_DYN_DATA",
+        winreg.HKEY_LOCAL_MACHINE: "HKEY_LOCAL_MACHINE"
+    }[rootkey]
+
+
+def __list_registry(full_key, res, dfs=False):
+    root_key, path, _value_name = __registry_path_split(full_key)
+    path = "\\".join([path, _value_name])
     try:
-        registry_key = winreg.OpenKey(root_key, path, 0, winreg.KEY_READ)
-        res = winreg.QueryValueEx(registry_key, key)
-        winreg.CloseKey(registry_key)
-        return res
+        key = winreg.OpenKey(root_key, path, 0, winreg.KEY_READ)
+        subkey_count, value_count, _ = winreg.QueryInfoKey(key)
+        for i in range(value_count):
+            value_name, value_data, _ = winreg.EnumValue(key, i)
+            res["\\".join([__root_kry2str(root_key), path, value_name])] = value_data
+        if dfs:
+            for i in range(subkey_count):
+                subkey_name = winreg.EnumKey(key, i)
+                full_subkey = "\\".join([__root_kry2str(root_key), path, subkey_name])
+                __list_registry(full_subkey, res, dfs=True)
+        winreg.CloseKey(key)
     except FileNotFoundError as e:
         return None
 
 
-def get_registry_value(key):
-    root_key, path, key = __registry_path_split(key)
+'''
+    列举出对应key键下的所有值,返回一个字典,字典的key为full_key,字典的值为value_data
+    注意,此方法会多次拼接/分隔full_key,比较低效
+    请确保传入的full_key是一个键而非值
+'''
+
+
+def list_registry(full_key, dfs=False):
+    res = {}
+    __list_registry(full_key, res, dfs=dfs)
+    return res
+
+
+'''
+    查询值数据,其中key是包含根键,路径,值名称的完整字符
+'''
+
+
+def get_registry_value(full_key):
+    root_key, path, value_name = __registry_path_split(full_key)
     try:
-        path = winreg.OpenKey(root_key, path)
+        key = winreg.OpenKey(root_key, path)
         # 获取注册表项的值
-        value, data_type = winreg.QueryValueEx(path, key)
-        winreg.CloseKey(path)
+        value, data_type = winreg.QueryValueEx(key, value_name)
+        winreg.CloseKey(key)
     except FileNotFoundError:
         return None, None
 
@@ -178,19 +216,27 @@ def merge_dict(dic1, dic2):
     for k, v in dic2:
         dic3[k] = v
     return dic3
+
+
 '''
 深度优先搜索
 xml.dom.minidom 的节点
 callback函数需要返回继续向下搜索的节点的迭代器
 '''
-def dfs_domNode(etNode,callback):
-    search_nodes=callback(etNode)
+
+
+def dfs_domNode(etNode, callback):
+    search_nodes = callback(etNode)
     if search_nodes is not None:
         for node in search_nodes:
-            dfs_domNode(node,callback)
+            dfs_domNode(node, callback)
+
+
 '''
     删除xml.dom.minidom的node中的所有空行子节点
 '''
+
+
 def remove_empty_lines(node):
     children = node.childNodes
     for child in children:
@@ -200,16 +246,18 @@ def remove_empty_lines(node):
         if child.nodeType == child.ELEMENT_NODE:
             remove_empty_lines(child)
 
+
 def sysinspector_caller():
-    base_dir=r".\utils\windows\sysinspector"
+    base_dir = r".\utils\windows\sysinspector"
     # 运行前先清理其他报告
     for f in oswa.ls(base_dir):
         if f.endswith(".xml"):
             oswa.rm(f)
     powershellf(r"utils\windows\ps_code\sysinspector_caller.ps1")
 
+
 def get_sysinspector_report_path():
     for f in oswa.ls(r".\utils\windows\sysinspector"):
-            if f.endswith(".xml"):
-                return f
+        if f.endswith(".xml"):
+            return f
     return None
