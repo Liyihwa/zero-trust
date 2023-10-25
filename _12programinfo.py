@@ -96,6 +96,7 @@ def program_info():
         # print("所有桌面图标快捷方式正常。")
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
+        logger.update()
     return name_list,res_list
 
 if __name__ == "__main__":

@@ -115,6 +115,7 @@ class QiHoo360(Antivirus):
         # 查询360版本
         self.version= utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\360Safe\LiveUp\UpdateCfg\360ver.dll\ver")
         dir_=utils.windows.user_maindir()+r"\AppData\Roaming\360Safe\360ScanLog";
+        print(dir)
         for f in oswa.ls(dir_):
             self.last_scan_time=max(self.last_scan_time,int(os.path.getctime(f)))
 
@@ -134,4 +135,3 @@ class QiHoo360(Antivirus):
         # 只要存在该键值对就说明是自启动的
         val = utils.get_registry_value(r"\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Sysdiag")
         return val != ""
-QiHoo360()

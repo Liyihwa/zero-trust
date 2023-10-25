@@ -2,9 +2,8 @@ import socket
 import psutil
 import winreg
 
-from configs import global_config
+from configs import global_config,network_config
 from safewa.logwa import logger
-
 
 def check_port(host, port):
     try:
@@ -62,7 +61,8 @@ def network_info():
     name_list = []
     res_list = []
     # 要检查的端口列表
-    ports = [3389, 22, 5900, 5901, 23, 3306, 3309]
+    ports = network_config.PortsChecked
+
 
     for port in ports:
         # check_port(host, port)
@@ -80,6 +80,7 @@ def network_info():
     #     print("Windows防火墙已禁用")
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
+        logger.update()
     return name_list, res_list
 
 if __name__ == "__main__":

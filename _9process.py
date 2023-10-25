@@ -74,6 +74,7 @@ def process_info():
     res_list.append(num_established_connections)
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
+        logger.update()
     return name_list, res_list
 
 if __name__ == "__main__":

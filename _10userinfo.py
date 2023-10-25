@@ -46,6 +46,7 @@ def user_info():
     res_list.append(is_admin())
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
+        logger.update()
     return name_list, res_list
 
 

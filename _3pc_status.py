@@ -4,6 +4,8 @@ import pynvml
 import psutil
 import threading
 
+from pynvml import NVMLError
+
 from safewa import logwa, utilwa
 from utils import windows
 import os
@@ -78,7 +80,11 @@ def disk():
     used = 0
 
     for p in psutil.disk_partitions(all=True):
-        dsk = psutil.disk_usage(p.mountpoint)
+        try:
+            dsk = psutil.disk_usage(p.mountpoint)
+        except PermissionError: #有些设备可能出现某个盘未就绪的情况
+            continue
+
         total += dsk.total
         used += dsk.used
     disk_available_size = total - used
@@ -89,7 +95,16 @@ def disk():
 
 def gpu():
     # 初始化nvml库
-    pynvml.nvmlInit()
+    global gpu_power, gpu_temper, gpu_total_memory, gpu_used_memory
+
+    try:
+        pynvml.nvmlInit()
+    except NVMLError:# 有的设备可能没有安装NVML，此处就直接返回默认值
+        gpu_power = None
+        gpu_temper = None
+        gpu_used_memory = None
+        gpu_total_memory = None
+        return
 
     # 获取可用的GPU数量
     num_gpu = pynvml.nvmlDeviceGetCount()
@@ -112,7 +127,6 @@ def gpu():
         power = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.0  # 单位：瓦特
         gpus_power.append(power)
 
-    global gpu_power, gpu_temper, gpu_total_memory, gpu_used_memory
     gpu_power = sum(gpus_power) / len(gpus_power)
     gpu_temper = sum(gpus_temperature) / len(gpus_temperature)
     gpu_used_memory = sum(gpus_used_mm) / len(gpus_used_mm)

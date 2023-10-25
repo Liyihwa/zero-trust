@@ -91,6 +91,7 @@ def autoitem_info():
     res_list.append(len(startup_items))
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
+        logger.update()
     return name_list, res_list
 
 if __name__ == "__main__":

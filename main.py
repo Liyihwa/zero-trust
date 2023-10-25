@@ -31,7 +31,6 @@ if __name__ == '__main__':
         name, res = func()
         name_list.extend(name)
         res_list.extend(res)
-
     ws.append(name_list)
     ws.append(res_list)
     wb.save(global_config.OutputFileName)
