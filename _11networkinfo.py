@@ -1,6 +1,7 @@
 import socket
 import psutil
 import winreg
+import wmi
 
 from configs import global_config,network_config
 from safewa.logwa import logger
@@ -78,12 +79,37 @@ def network_info():
     #     print("Windows防火墙已启用")
     # else:
     #     print("Windows防火墙已禁用")
+    name_list.append("Wifi是否开启")
+    if is_wifi_enabled():
+        res_list.append(True)
+    else:
+        res_list.append(False)
+    name_list.append("蓝牙是否开启")
+    if is_bluetooth_enabled():
+        res_list.append(True)
+    else:
+        res_list.append(False)
     for k, v in zip(name_list, res_list):
         logger.infof("{}: {::gx}", k, v)
         logger.update()
     return name_list, res_list
 
-if __name__ == "__main__":
+def is_wifi_enabled():
+    wifi_interfaces = [interface for interface, addrs in psutil.net_if_addrs().items() if 'Wi-Fi' in interface]
+    return len(wifi_interfaces) > 0
 
-    logger.info("网络信息收集中.....")
+def is_bluetooth_enabled():
+    try:
+        c = wmi.WMI()
+        for controller in c.Win32_PnPEntity():
+            if "Bluetooth" in str(controller.Caption):
+                if controller.Status == "OK":
+                    return True  # 蓝牙已启用
+        return False  # 蓝牙未启用
+    except Exception as e:
+        return f"无法确定蓝牙状态: {e}"
+
+
+
+if __name__ == "__main__":
     network_info()

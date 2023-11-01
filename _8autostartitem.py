@@ -1,35 +1,33 @@
 import os
 import time
 import winreg
-from virustotal_python import Virustotal
 from win32com.client import Dispatch
 
-from configs import global_config
-from safewa.logwa import logger
+from configs import global_config, autostartitem_config
 
 
 def get_startup_items():
     startup_items = []
-    run_key = r"Software\Microsoft\Windows\CurrentVersion\Run"
-    try:
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, run_key) as hkey:
-            for i in range(winreg.QueryInfoKey(hkey)[1]):
-                name, value, type = winreg.EnumValue(hkey, i)
-                if (type == 2):
-                    continue
-                path = extract_file_path(value)
-                # virus_total_info = get_virustotal_info(path)
-                file_info = os.stat(path)
-                startup_items.append({
-                    "Name": name,
-                    "Value": value,
-                    "Create Time": time.ctime(file_info.st_ctime),
-                    "Modify Time": time.ctime(file_info.st_mtime),
-                    "Path": path,
-                    # "VirusTotal": virus_total_info
-                })
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    for lm_key in autostartitem_config.QueryRegister_HKLM:
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, lm_key) as hkey:
+                for i in range(winreg.QueryInfoKey(hkey)[1]):
+                    name, value, type = winreg.EnumValue(hkey, i)
+                    if (type == 2):
+                        continue
+                    path = extract_file_path(value)
+                    # virus_total_info = get_virustotal_info(path)
+                    file_info = os.stat(path)
+                    startup_items.append({
+                        "Name": name,
+                        "Value": value,
+                        "Create Time": time.ctime(file_info.st_ctime),
+                        "Modify Time": time.ctime(file_info.st_mtime),
+                        "Path": path,
+                        # "VirusTotal": virus_total_info
+                    })
+        except Exception as e:
+            print(f"Error: {str(e)}")
 
     # 查询 HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
     current_user_key = r"Software\Microsoft\Windows\CurrentVersion\Run"

@@ -49,7 +49,5 @@ def user_info():
         logger.update()
     return name_list, res_list
 
-
 if __name__ == "__main__":
-    logger.info("用户信息收集中.....")
     user_info()

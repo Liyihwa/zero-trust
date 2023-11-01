@@ -37,6 +37,7 @@ driver_config.UsePreviousReport = True  # 使用原先的报告(这是registry�
 
 # autostartitem
 autostartitem_config.CheckedItemsCount=1
+autostartitem_config.QueryRegister_HKLM=[r"Software\Microsoft\Windows\CurrentVersion\Run",r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"]
 
 # process
 process_config.CheckedItemsCount=2
@@ -46,7 +47,7 @@ userinfo_config.CheckedItemsCount=2
 
 # network
 network_config.PortsChecked=[3389, 22, 5900, 5901, 23, 3306, 3309]
-network_config.CheckedItemsCount=len(network_config.PortsChecked)+2
+network_config.CheckedItemsCount=len(network_config.PortsChecked)+4
 
 # program
 program_config.CheckedItemsCount=4
